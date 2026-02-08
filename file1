@@ -1,0 +1,67 @@
+# AI for Microplastics Detection using Synthetic Data
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
+# -----------------------------
+# 1. Generate Synthetic Data
+# -----------------------------
+np.random.seed(42)
+samples = 1000
+
+# Synthetic features (simulating microscopy/image analysis)
+data = {
+    "particle_size": np.random.normal(50, 15, samples),       # micrometers
+    "shape_irregularity": np.random.uniform(0, 1, samples),   # 0 = smooth, 1 = very irregular
+    "color_intensity": np.random.uniform(0, 255, samples),    # grayscale intensity
+    "surface_texture": np.random.uniform(0, 1, samples),      # roughness
+}
+
+df = pd.DataFrame(data)
+
+# Target label: 1 = Microplastic, 0 = Non-microplastic
+df["label"] = (
+    (df["particle_size"] < 60) &
+    (df["shape_irregularity"] > 0.4) &
+    (df["surface_texture"] > 0.5)
+).astype(int)
+
+# -----------------------------
+# 2. Train-Test Split
+# -----------------------------
+X = df.drop("label", axis=1)
+y = df["label"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# -----------------------------
+# 3. Train Model
+# -----------------------------
+model = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
+model.fit(X_train, y_train)
+
+# -----------------------------
+# 4. Model Evaluation
+# -----------------------------
+y_pred = model.predict(X_test)
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+# -----------------------------
+# 5. Sample Prediction
+# -----------------------------
+sample_particle = np.array([[45, 0.7, 180, 0.8]])
+prediction = model.predict(sample_particle)
+
+print("\nSample Prediction:",
+      "Microplastic" if prediction[0] == 1 else "Non-microplastic")
